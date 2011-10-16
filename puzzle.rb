@@ -32,6 +32,8 @@ class Puzzle
 		#スタックを初期化
 		@stack = []
 		@stack.push [-1, board]
+		
+		@answer_num = 0
   end
 	
 	attr_accessor :blocks
@@ -113,6 +115,10 @@ class Puzzle
 			end
 		end
 
+		return true
+	end
+	
+	def zero_check?(board)
 		#枝刈り
 		#0の周りチェック
 		for i in 4...10 do
@@ -125,9 +131,10 @@ class Puzzle
 				end
 			end
 		end
+
 		return true
 	end
-	
+
 	def put_block(block, board, y, x)
 		nboard = Marshal.load(Marshal.dump(board))	
 		for i in 0...5 do
@@ -152,24 +159,36 @@ class Puzzle
 		#スタックから一つ取り出す
 		@stack
 		move = @stack.pop #[-1, board]
+		if move == nil then
+			puts "scack is now empty."
+			exit
+		end
+
 		bl_num = move[0] + 1
 		board = move[1]
 
 		#もし解けていたら
 		if bl_num == 12 then
-		  return board
+			show_board board
+			@answer_num += 1
+			puts "#answer No. {@answer_num}"
+			#ファイルに回答を保存
+			File.open('result.txt','a'){ |file|
+			  file.puts board.join(',')
+			}
+		  return nil 
 		end
 
 		bl = @blocks[bl_num]
-
 		bl.each{ |b|
 			for i in 0...9 do
 				for j in 0...13 do
 					if fit?(b, board, i, j) then
-						@stack.push [bl_num, put_block(b, board, i, j)]
+						n_board = put_block(b, board, i, j)
+						@stack.push [bl_num, n_board] if zero_check?(n_board)
 					#	`clear`						
 					#	show_board board
-						puts
+					#	puts
 					end
 				end
 			end
